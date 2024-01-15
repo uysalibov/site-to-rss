@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="row">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
+            onclick="approve()">
+            Review
+        </button>
+    </div>
+    <div class="row">
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Review Selections</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <input class="form-check-input" type="checkbox" value="" id="titleCheckbox" disabled>
+                                <label for="title">Title</label>
+                            </div>
+                            <div class="col-md-8">
+                                <select id="title" class="form-select">
+                                </select>
+
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <input class="form-check-input" type="checkbox" value="" id="descriptionCheckbox"
+                                    disabled>
+                                <label for="description">Description</label>
+                            </div>
+                            <div class="col-md-8">
+                                <select id="description" class="form-select">
+                                </select>
+
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <input class="form-check-input" type="checkbox" value="" id="dateCheckbox">
+                                <label for="date">Date</label>
+                            </div>
+                            <div class="col-md-8">
+                                <select id="date" class="form-select" disabled>
+                                </select>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <iframe id="my_iframe" src='' frameborder="0" width="100%" , height="750px" class=""></iframe>
+    </div>
+    <script>
+        var selectedItems = []
+        var otherItems = []
+        var refMap = {}
+        var selectCount = 0
+        async function iframe_load() {
+            response = await fetch("/fetch?url={{ url }}")
+            document.getElementById("my_iframe").srcdoc = await response.text()
+        }
+        iframe_load()
+        var iframe = document.getElementById('my_iframe');
+        function select(event) {
+            if (selectedItems.includes(event.target)) {
+                event.target.style.border = "none"
+                selectedItems = selectedItems.filter(item => item !== event.target)
+                refItem = refMap[event.target]
+                for (let index = refItem["min"]; index < refItem["max"]; index++) {
+                    const element = otherItems[index];
+                    element.style.border = "none"
+
+                }
+                otherItems = otherItems.filter(item => !(otherItems.indexOf(item) >= refItem["min"] && otherItems.indexOf(item) < refItem["max"]))
+                // otherItems = otherItems.splice(refItem["min"], refItem["max"] - refItem["min"])
+                delete refMap[event.target];
+                document.getElementById("title").innerHTML = ""
+                document.getElementById("description").innerHTML = ""
+                document.getElementById("date").innerHTML = ""
+            }
+            else {
+                event.target.style.border = "2px solid red"
+                selectedItems.push(event.target)
+                var tItems = iframe.contentDocument.querySelectorAll(getPathOfElement(event.target))
+                refMap[event.target] = { "min": otherItems.length, "max": tItems.length + otherItems.length }
+                for (let index = 0; index < tItems.length; index++) {
+                    const element = tItems[index];
+                    element.style.border = "2px solid red"
+                    otherItems.push(element)
+                }
+
+            }
+        }
+        var hoverItem;
+        function hover(event) {
+
+            if (hoverItem) {
+                if (selectedItems.includes(hoverItem) || otherItems.includes(hoverItem)) {
+                    hoverItem.style.border = "2px solid red";
+                }
+                else {
+                    hoverItem.style.border = "none";
+
+                }
+            }
+            hoverItem = iframe.contentDocument.elementsFromPoint(event.clientX, event.clientY)[0]
+            hoverItem.style.border = "2px solid blue";
+            // console.log(event)
+        }
+
+        function getPathOfElement(element, relative = false) {
+            var result = []
+            parent = element
+            while (parent) {
+                if (parent.parentElement) {
+                    result.push(parent.parentElement);
+                    parent = parent.parentElement
+                }
+                else {
+                    break;
+                }
+            }
+            var css_string = "";
+            for (let index = 0; index < result.length; index++) {
+                tElement = result[index]
+                temp = tElement.tagName
+                if (tElement.getAttribute("class")) {
+                    temp += "." + tElement.getAttribute("class").replace(" ", ".")
+                }
+                if (index > 1 || relative) {
+                    break;
+                }
+                css_string = temp + " > " + css_string
+
+            }
+            return css_string + (element.getAttribute("class") ? element.tagName + "." + element.getAttribute("class").replace(" ", ".") : element.tagName)
+        }
+
+        function approve() {
+            text = ""
+            titleObj = document.getElementById("title")
+            descriptionObj = document.getElementById("description")
+            dateObj = document.getElementById("date")
+            Array.from(selectedItems[0].children).forEach(element => {
+                var opt = document.createElement('option');
+                opt.innerHTML = element.innerText
+                opt.value = getPathOfElement(element, true)
+                titleObj.append(opt.cloneNode(true))
+                descriptionObj.append(opt.cloneNode(true))
+                dateObj.append(opt.cloneNode(true))
+                // text += element.innerText + "\n"
+            });
+            // document.getElementsByClassName("modal-body")[0].innerText = text
+        }
+
+        var checkbox = document.getElementById("dateCheckbox");
+        function validator(event) {
+            if (event.target.id == "titleCheckbox") {
+
+                document.getElementById('title').disabled = !checkbox.checked;
+            }
+            else if (event.target.id == "descriptionCheckbox") {
+
+                document.getElementById('description').disabled = !checkbox.checked;
+            }
+            else if (event.target.id == "dateCheckbox") {
+
+                document.getElementById('date').disabled = !checkbox.checked;
+            }
+
+        }
+
+        checkbox.addEventListener('click', validator);
+
+        $('#my_iframe').load(function () {
+            //then set up some access points
+            var contents = $(this).contents(); // contents of the iframe
+            $(contents).find("body").on('mouseup', select);
+        });
+        $('#my_iframe').load(function () {
+            //then set up some access points
+            var contents = $(this).contents(); // contents of the iframe
+            $(contents).find("body").on('mouseover', hover);
+        });
+
+        $('#my_iframe').load(function () {
+            //then set up some access points
+            var contents = $(this).contents(); // contents of the iframe
+            $(contents).find("body").on('click', (event) => { event.preventDefault() });
+        });
+    </script>
+</body>
+
+</html>
