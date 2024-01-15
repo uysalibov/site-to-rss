@@ -24,51 +24,67 @@
         <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="exampleModalLabel">Review Selections</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <input class="form-check-input" type="checkbox" value="" id="titleCheckbox" disabled>
-                                <label for="title">Title</label>
-                            </div>
-                            <div class="col-md-8">
-                                <select id="title" class="form-select">
-                                </select>
-
-                            </div>
+                    <form action="/feed" method="post">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Review Selections</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <input class="form-check-input" type="checkbox" value="" id="descriptionCheckbox"
-                                    disabled>
-                                <label for="description">Description</label>
-                            </div>
-                            <div class="col-md-8">
-                                <select id="description" class="form-select">
-                                </select>
+                        <div class="modal-body">
+                            <input type="text" name="element" id="element" hidden>
+                            <input type="text" name="site" id="site" value="{{url}}" hidden>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <input class="form-check-input" type="checkbox" value="" id="titleCheckbox" disabled
+                                        checked>
+                                    <label for="title">Title</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <select id="title" class="form-select" name="title">
+                                    </select>
 
+                                </div>
                             </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <input class="form-check-input" type="checkbox" value="" id="descriptionCheckbox"
+                                        disabled checked>
+                                    <label for="description">Description</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <select id="description" class="form-select" name="description">
+                                    </select>
+
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <input class="form-check-input" type="checkbox" value="" id="urlCheckbox">
+                                    <label for="url">URL</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <select id="url" class="form-select" name="url" disabled>
+                                    </select>
+
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <input class="form-check-input" type="checkbox" value="" id="dateCheckbox">
+                                    <label for="date">Date</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <select id="date" class="form-select" name="date" disabled>
+                                    </select>
+
+                                </div>
+                            </div>
+
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <input class="form-check-input" type="checkbox" value="" id="dateCheckbox">
-                                <label for="date">Date</label>
-                            </div>
-                            <div class="col-md-8">
-                                <select id="date" class="form-select" disabled>
-                                </select>
-
-                            </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
                         </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -103,6 +119,7 @@
                 document.getElementById("title").innerHTML = ""
                 document.getElementById("description").innerHTML = ""
                 document.getElementById("date").innerHTML = ""
+                document.getElementById("url").innerHTML = ""
             }
             else {
                 event.target.style.border = "2px solid red"
@@ -116,6 +133,7 @@
                 }
 
             }
+            document.getElementById("element").setAttribute('value', getPathOfElement(event.target));
         }
         var hoverItem;
         function hover(event) {
@@ -151,52 +169,71 @@
                 tElement = result[index]
                 temp = tElement.tagName
                 if (tElement.getAttribute("class")) {
-                    temp += "." + tElement.getAttribute("class").replace(" ", ".")
+                    temp += "." + tElement.getAttribute("class").trim().replace(" ", ".")
                 }
+                css_string = temp + " > " + css_string
                 if (index > 1 || relative) {
                     break;
                 }
-                css_string = temp + " > " + css_string
 
             }
-            return css_string + (element.getAttribute("class") ? element.tagName + "." + element.getAttribute("class").replace(" ", ".") : element.tagName)
+            return css_string + (element.getAttribute("class") ? element.tagName + "." + element.getAttribute("class").trim().replace(" ", ".") : element.tagName)
         }
 
         function approve() {
             text = ""
             titleObj = document.getElementById("title")
             descriptionObj = document.getElementById("description")
+            urlObj = document.getElementById("url")
             dateObj = document.getElementById("date")
             Array.from(selectedItems[0].children).forEach(element => {
-                var opt = document.createElement('option');
-                opt.innerHTML = element.innerText
-                opt.value = getPathOfElement(element, true)
-                titleObj.append(opt.cloneNode(true))
-                descriptionObj.append(opt.cloneNode(true))
-                dateObj.append(opt.cloneNode(true))
+                if (element.innerText != "") {
+                    var opt = document.createElement('option');
+                    opt.innerHTML = element.innerText
+                    opt.value = getPathOfElement(element, true)
+                    titleObj.append(opt.cloneNode(true))
+                    descriptionObj.append(opt.cloneNode(true))
+
+                    dateObj.append(opt.cloneNode(true))
+                }
                 // text += element.innerText + "\n"
             });
+            console.log(selectedItems[0].querySelectorAll("*[href]"))
+            Array.from(selectedItems[0].querySelectorAll("*[href]")).forEach(element => {
+                var opt = document.createElement('option');
+                opt.innerHTML = element.getAttribute("href")
+                opt.value = getPathOfElement(element, true)
+                urlObj.append(opt.cloneNode(true))
+            })
             // document.getElementsByClassName("modal-body")[0].innerText = text
         }
 
-        var checkbox = document.getElementById("dateCheckbox");
         function validator(event) {
             if (event.target.id == "titleCheckbox") {
 
-                document.getElementById('title').disabled = !checkbox.checked;
+                document.getElementById('title').disabled = !document.getElementById(event.target.id).checked;
             }
             else if (event.target.id == "descriptionCheckbox") {
 
-                document.getElementById('description').disabled = !checkbox.checked;
+                document.getElementById('description').disabled = !document.getElementById(event.target.id).checked;
             }
             else if (event.target.id == "dateCheckbox") {
 
-                document.getElementById('date').disabled = !checkbox.checked;
+                document.getElementById('date').disabled = !document.getElementById(event.target.id).checked;
+            }
+            else if (event.target.id == "urlCheckbox") {
+
+                document.getElementById('url').disabled = !document.getElementById(event.target.id).checked;
             }
 
         }
 
-        checkbox.addEventListener('click', validator);
+
+        var inputs = document.querySelectorAll("input[type='checkbox']");
+        inputs.forEach(element => {
+
+            element.addEventListener('click', validator);
+        })
 
         $('#my_iframe').load(function () {
             //then set up some access points
