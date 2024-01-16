@@ -1,10 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn, sqlite3
 
-
+from internal.get_template import template
 from routers import feed
 
 app = FastAPI(debug=True)
@@ -16,8 +15,6 @@ app.add_middleware(
 )
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
-templates = Jinja2Templates(directory="./templates")
-
 app.include_router(feed.router)
 
 
@@ -25,29 +22,22 @@ app.include_router(feed.router)
 async def startup():
     app.db: sqlite3.Connection = sqlite3.connect("rss.db")
 
-    cur = app.db.cursor()
+    app.cur = app.db.cursor()
 
     sql = (
         """CREATE TABLE IF NOT EXISTS rss (url, item, title, description, link, date)"""
     )
-    cur.execute(sql)
+    app.cur.execute(sql)
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    app.db.close()
 
 
 @app.get("/")
 async def homepage(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html", context={})
-
-
-@app.get("/iframe")
-async def iframe(request: Request):
-    form_data = request.query_params
-    print(form_data)
-
-    return templates.TemplateResponse(
-        request=request,
-        name="iframe.html",
-        context={"url": form_data.get("url")},
-    )
+    return template().TemplateResponse(request=request, name="index.html", context={})
 
 
 if __name__ == "__main__":
