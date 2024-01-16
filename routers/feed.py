@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import JSONResponse, HTMLResponse
-import requests
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+import requests, json
 from selectolax.parser import HTMLParser
 from internal.get_template import template
 
@@ -44,35 +44,7 @@ async def feed_post(request: Request):
 
     request.app.cur.execute(insert_query, veri)
     request.app.db.commit()
-    return JSONResponse({"msg": "Site added successfully to feed!"})
-
-    html = await fetch(request=request, url=form_data.get("site"))
-
-    tree = HTMLParser(html.body)
-    items = [item for item in tree.css(form_data.get("element"))]
-
-    return [
-        {
-            "title": "".join(
-                [tit.text(strip=True) for tit in item.css(form_data.get("title"))]
-            ),
-            "description": "".join(
-                [
-                    desc.text(strip=True)
-                    for desc in item.css(form_data.get("description"))
-                ]
-            ),
-            "date": "".join(
-                [date.text(strip=True) for date in item.css(form_data.get("date"))]
-            )
-            if form_data.get("date")
-            else "",
-            "url": item.css_first(form_data.get("url")).attributes.get("href")
-            if form_data.get("url")
-            else "",
-        }
-        for item in items
-    ]
+    return RedirectResponse("/rss")
 
 
 @router.post("/auto")
