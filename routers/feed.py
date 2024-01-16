@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import JSONResponse, HTMLResponse
-import requests, json
+import requests
 from selectolax.parser import HTMLParser
+from internal.get_template import template
 
 router = APIRouter()
 
@@ -17,19 +18,39 @@ async def fetch(request: Request, url: str):
 
 @router.get("/feed")
 async def feed_get(request: Request):
-    return request.query_params
+    form_data = request.query_params
+
+    return template().TemplateResponse(
+        request=request,
+        name="iframe.html",
+        context={"url": form_data.get("url")},
+    )
 
 
 @router.post("/feed")
 async def feed_post(request: Request):
     form_data = await request.form()
-    print(form_data)
-    print(form_data.get("date"))
+
+    insert_query = """INSERT INTO rss (url, item, title, description, link, date)
+                  VALUES (?, ?, ?, ?, ?, ?)"""
+    veri = (
+        form_data.get("site"),
+        form_data.get("element"),
+        form_data.get("title"),
+        form_data.get("description"),
+        form_data.get("url"),
+        form_data.get("date"),
+    )
+
+    request.app.cur.execute(insert_query, veri)
+    request.app.db.commit()
+    return JSONResponse({"msg": "Site added successfully to feed!"})
+
     html = await fetch(request=request, url=form_data.get("site"))
-    print("asdad")
+
     tree = HTMLParser(html.body)
     items = [item for item in tree.css(form_data.get("element"))]
-    print("aq")
+
     return [
         {
             "title": "".join(
@@ -67,9 +88,6 @@ async def auto_post(request: Request, url: str = Form()):
     tree = HTMLParser(req.content)
     articles = [element for element in tree.css("article")]
     if articles:
-        headings = [element.css_first("header") for element in articles]
-        print(headings)
-
         return JSONResponse(
             {
                 "count": len(articles),
