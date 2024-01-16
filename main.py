@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn, sqlite3
 
 from internal.get_template import template
-from routers import feed
+from routers import feed, rss
 
 app = FastAPI(debug=True)
 app.add_middleware(
@@ -16,6 +16,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
 app.include_router(feed.router)
+app.include_router(rss.router)
 
 
 @app.on_event("startup")
@@ -24,9 +25,15 @@ async def startup():
 
     app.cur = app.db.cursor()
 
-    sql = (
-        """CREATE TABLE IF NOT EXISTS rss (url, item, title, description, link, date)"""
-    )
+    sql = """CREATE TABLE IF NOT EXISTS rss (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            url TEXT,
+                            item TEXT,
+                            title TEXT,
+                            description TEXT,
+                            link TEXT,
+                            date TEXT
+                        )"""
     app.cur.execute(sql)
 
 
