@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn, sqlite3
 
 from internal.get_template import template
-from routers import feed, rss
+from routers import feed, rss, database
 
 app = FastAPI(debug=True)
 app.add_middleware(
@@ -17,6 +17,7 @@ app.mount("/static", StaticFiles(directory="./static"), name="static")
 
 app.include_router(feed.router)
 app.include_router(rss.router)
+app.include_router(database.router)
 
 
 @app.on_event("startup")
@@ -44,7 +45,11 @@ async def shutdown():
 
 @app.get("/")
 async def homepage(request: Request):
-    return template().TemplateResponse(request=request, name="index.html", context={})
+    app.cur.execute("SELECT * FROM rss")
+    feeds = app.cur.fetchall()
+    return template().TemplateResponse(
+        request=request, name="index.html", context={"feeds": feeds}
+    )
 
 
 if __name__ == "__main__":
