@@ -3,6 +3,15 @@ body {
     color: #e5e5e5;
 }
 
+.navbar {
+    background: #ffb319 !important;
+}
+
+.navbar-brand {
+    color: #191919 !important;
+}
+
+
 input[type="search"] {
     background: transparent;
     border-radius: 1rem;
