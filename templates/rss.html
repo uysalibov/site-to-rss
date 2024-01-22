@@ -1,5 +1,38 @@
 {% extends "base.html" %}
 
 {% block content %}
-{{ content | safe }}
+<div class="row">
+    <button type="button" class="btn btn-primary" onclick="window.location='/';">Return to HomePage
+    </button>
+</div>
+<div class="row justify-content-center">
+    {% for item in content %}
+    <ol class="list-group list-group-numbered mb-3 mt-3 col-md-8">
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">Title</div>
+                {{item.title}}
+            </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">Description</div>
+                {{item.description}}
+            </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">URL</div>
+                {{item.url}}
+            </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">Date</div>
+                {{item.date}}
+            </div>
+        </li>
+    </ol>
+    {% endfor %}
+</div>
 {% endblock %}
