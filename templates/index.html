@@ -14,12 +14,107 @@
             </div>
         </div>
         <div class="row justify-content-center mt-2 mb-2">
-            <button class="btn btn-primary rounded-pill" type="submit">Fetch</button>
+            <button class="btn btn-primary rounded-pill col-md-2" type="submit">Fetch</button>
         </div>
     </form>
 
 </div>
 <div class="divider"></div>
 
+<div class="container mt-5">
+    <h2>Your Feed</h2>
+    <ul class="list-group">
+        {% for feed in feeds %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="data{{feed[0]}} align-items-left">
+                {{feed[1]}}
+            </div>
+            <div class="btn-group" role="group" aria-label="Item Actions">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal"
+                    onclick="editItem('{{feed[0]}}')">Edit</button>
+                <button type="button" class="btn btn-danger" onclick="deleteItem(this)">Delete</button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="editModalLabel">Edit Feed</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control" id="rssId" hidden>
+                <div class="row g-3 mb-3">
+                    <label for="rssItem" class="form-label col-sm-3">Item:</label>
+                    <input type="text" class="form-control col" id="rssItem" placeholder="Enter edited item">
+                </div>
+                <div class="row g-3 mb-3">
+                    <label for="rssTitle" class="form-label col-sm-3">Title:</label>
+                    <input type="text" class="form-control col" id="rssTitle" placeholder="Enter edited item">
+                </div>
+                <div class="row g-3 mb-3">
+                    <label for="rssDescription" class="form-label col-sm-3">Description:</label>
+                    <input type="text" class="form-control col" id="rssDescription" placeholder="Enter edited item">
+                </div>
+                <div class="row g-3 mb-3">
+                    <label for="rssLink" class="form-label col-sm-3">Link:</label>
+                    <input type="text" class="form-control col" id="rssLink" placeholder="Enter edited item">
+                </div>
+                <div class="row g-3 mb-3">
+                    <label for="rssDate" class="form-label col-sm-3">Date:</label>
+                    <input type="text" class="form-control col" id="rssDate" placeholder="Enter edited item">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    async function editItem(item) {
+        await fetch("/database?id=" + item).then(res => res.json()).then(data => {
+            document.getElementById("rssId").value = data.data[0]
+            document.getElementById("rssItem").value = data.data[2]
+            document.getElementById("rssTitle").value = data.data[3]
+            document.getElementById("rssDescription").value = data.data[4]
+            document.getElementById("rssLink").value = data.data[5]
+            document.getElementById("rssDate").value = data.data[6]
+        })
+    }
+    async function deleteItem(button) {
+        var listItem = button.closest('li');
+        var id = listItem.children[0].attributes.class.value.split(" ")[0].slice(4)
+        await fetch("/database?id=" + id, {
+            "method": "delete",
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        })
+        listItem.remove();
+    }
+    async function saveChanges() {
+        await fetch("/database", {
+            "method": "post", "body": JSON.stringify({
+                "id": document.getElementById("rssId").value,
+                "item": document.getElementById("rssItem").value,
+                "title": document.getElementById("rssTitle").value,
+                "description": document.getElementById("rssDescription").value,
+                "link": document.getElementById("rssLink").value,
+                "date": document.getElementById("rssDate").value,
+            }),
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        })
+
+        $('#editModal').modal('hide');
+    }
+</script>
 {% endblock %}
