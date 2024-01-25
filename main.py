@@ -22,9 +22,11 @@ app.include_router(database.router)
 
 @app.on_event("startup")
 async def startup():
+    print("startup başlıyor")
     app.db: sqlite3.Connection = sqlite3.connect("rss.db")
-
+    print(app.db)
     app.cur = app.db.cursor()
+    print(app.cur)
 
     sql = """CREATE TABLE IF NOT EXISTS rss (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,4 +55,4 @@ async def homepage(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8001, reload=True)
+    uvicorn.run("main:app", port=8001, host="0.0.0.0")
